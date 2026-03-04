@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,7 @@ export default function SimpleSignUp() {
     const containerRef = useRef<HTMLDivElement>(null);
     const { register, handleSubmit, formState: { errors } } = useForm<SignUpData>();
     const router = useRouter()
+    const [loading, setLoading] = useState(false)
 
     useGSAP(() => {
         // A simple, clean staggered fade-up animation
@@ -26,21 +27,26 @@ export default function SimpleSignUp() {
         });
     }, { scope: containerRef });
 
-    const onSubmit = async (data: SignUpData) =>{
+    const onSubmit = async (data: SignUpData) => {
         try {
+            setLoading(true)
             const fullname = data.fullname;
             const email = data.email;
             const password = data.password;
-            // if (!fullname || !email || password){
-            //     toast.error("All fields are required")
-            //     return
-            // }
-            const result = await axiosInstance.post("/api/signup" , {fullname , email , password})
+            console.log(data)
+            if (!fullname || !email || !password) {
+                toast.error("All fields are required")
+                return
+            }
+            const result = await axiosInstance.post("/api/signup", { fullname, email, password })
             console.log(result)
             toast.success("Verify Your Account")
-            router.push("/login")
-        } catch (error) {
-            
+            setLoading(false)
+            router.push("/verify-email")
+        } catch (error: any) {
+            console.log(error)
+            setLoading(false)
+            toast.error(error)
         }
     };
 
@@ -86,12 +92,12 @@ export default function SimpleSignUp() {
                     </div>
 
                     <button type="submit" className="animate-item w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors mt-4">
-                        Sign Up
+                        {loading ? "Verifying...." : "Signup"}
                     </button>
                 </form>
 
                 <p className="animate-item text-center text-zinc-500 text-sm mt-6">
-                    Already have an account? <a href="#" className="text-blue-400 hover:text-blue-300">Log in</a>
+                    Already have an account? <a href="/login" className="text-blue-400 hover:text-blue-300">Log in</a>
                 </p>
             </div>
         </div>

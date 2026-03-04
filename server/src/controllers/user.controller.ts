@@ -5,6 +5,7 @@ import crypto from "crypto"
 import { generateVerificationCode } from "../utils/generateVerificationToken";
 import generateTokenAndSetCookie from "../middlewares/generateTokenAndSetCookie";
 import { AuthRequest } from "../types/express";
+import { sendPasswordResetEmail, sendResetSuccessEmail, SendVerficationEamil, sendWelcomeEmail } from "../emails/email";
 
 export const signup = async (req: Request, res: Response) => {
     try {
@@ -33,7 +34,7 @@ export const signup = async (req: Request, res: Response) => {
         await user.save()
 
         generateTokenAndSetCookie(res, user._id);
-        // await SendVerficationEamil(email , code);
+        await SendVerficationEamil(email , code);
 
         return res.status(200).json({ success: true, message: "User created successfully", user: { ...user, password: undefined } })
     } catch (error) {
@@ -56,7 +57,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
         user.verificationToken = '0';
         user.verificationTokenExpiresAt = new Date(0);
         await user.save()
-        // await sendWelcomeEmail(user.email , user.fullname)
+        await sendWelcomeEmail(user.email , user.fullname)
         const userObj = await User.findById(user._id).select("-password")
         return res.status(201).json({ success: true, message: "Verified Successfully", })
 
@@ -87,6 +88,7 @@ export const login = async (req: Request, res: Response) => {
         }
         generateTokenAndSetCookie(res, isExist._id);
         // Send Welcome Email
+        sendWelcomeEmail(email , isExist.fullname)
         isExist.lastLogin = new Date()
         await isExist.save()
         return res.status(200).json({
@@ -130,7 +132,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         await user.save()
 
         // Send Email
-        // await sendPasswordResetEmail(user.email , `${process.env.CLIENT_URL}/reset-password/${code}`)
+        await sendPasswordResetEmail(user.email , `${process.env.CLIENT_URL}/reset-password/${code}`)
 
         return res.status(201).json({ success: true, message: "Password reset email has sent successfully on your Email" })
     } catch (error) {
@@ -161,6 +163,7 @@ export const resetPassword = async (req: Request, res: Response) => {
         await user.save()
 
         // sendresetpasswordsuccessemail
+        sendResetSuccessEmail(user.email)
         return res.status(200).json({ success: true, message: "Password Reset Successfully" })
     } catch (error) {
         console.log("Error in resetPassword function : ", error)

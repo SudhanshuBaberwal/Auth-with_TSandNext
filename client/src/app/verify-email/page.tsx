@@ -3,10 +3,15 @@
 import React, { useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import axiosInstance from "@/lib/axios";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function SimpleVerify() {
     const containerRef = useRef<HTMLDivElement>(null);
     const [code, setCode] = useState("");
+    const [loading , setLoading] = useState(false)
+    const router = useRouter()
 
     useGSAP(() => {
         gsap.from(".animate-item", {
@@ -18,9 +23,19 @@ export default function SimpleVerify() {
         });
     }, { scope: containerRef });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit =  async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Verifying Code:", code);
+        setLoading(true)
+        try {
+            const result = await axiosInstance.post("/api/verify-email" , {code})
+            console.log(result)
+            toast.success("Verified Successfully")
+            router.push("/")
+        } catch (error) {
+            console.log(error)
+            toast.error("Error")
+        }
+        
     };
 
     return (
@@ -55,7 +70,7 @@ export default function SimpleVerify() {
                         disabled={code.length !== 6}
                         className="animate-item w-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-800 disabled:text-zinc-500 text-white font-medium py-3 rounded-lg transition-colors"
                     >
-                        Verify Email
+                       {loading ? "....." : "Verify Email"}
                     </button>
                 </form>
 
